@@ -1,6 +1,5 @@
 "use client";
-import { useSearchParams } from "next/navigation";
-import * as z from "zod";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -13,25 +12,10 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
-const formSchema = z.object({
-  sizeAnswer: z.string().optional(),
-  lockedAnswer: z.string().optional(),
-  mapAnswer: z.string().optional(),
-  facilitiesAnswer: z.string().optional(),
-  elevatorAnswer: z.string().optional(),
-  parkingAnswer: z.string().optional(),
-  otherAnswer: z.string().optional(),
-});
-
-type FormAnswers = z.infer<typeof formSchema>;
-export type DistrictData = FormAnswers & {
-  district: string;
-  name: string;
-  date: string;
-};
+import { DistrictData, FormAnswers, formSchema } from "@/lib/types";
 
 export default function FormPage({ params }: { params: { slug: string } }) {
+  const router = useRouter();
   const queryParams = useSearchParams();
   const district = params.slug;
   const name = queryParams.get("name");
@@ -62,6 +46,7 @@ export default function FormPage({ params }: { params: { slug: string } }) {
       method: "POST",
       body: JSON.stringify(formData),
     });
+    router.push("/success/form");
   };
 
   return (
