@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { formResponses, sentEmails } from "./db/schema";
 
 export type RowData = {
   Anteckningar: string;
@@ -28,4 +29,20 @@ export type DistrictData = FormAnswers & {
   district: string;
   name: string;
   date: string;
+};
+
+export type SelectFormResponse = typeof formResponses.$inferSelect;
+
+export type SelectSentEmail = typeof sentEmails.$inferSelect;
+export type InsertSentEmail = typeof sentEmails.$inferInsert;
+
+export type Target = {
+  email: string;
+  distrikt: string;
+  namn: string;
+  aterlamnad: string;
+};
+
+export type PostBody = {
+  targets: Target[];
 };

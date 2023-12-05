@@ -23,10 +23,21 @@ import { Dialog } from "@/components/ui/dialog";
 import Loading from "@/components/modals/loading";
 import { GoBackButton } from "@/components/interaction/go-back";
 import { useUpload } from "@/context/upload-context";
-import { FormEvent } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Target } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
-export default function Dashboard() {
-  const { data } = useUpload();
+export default function TablePage() {
+  const [isSending, setIsSending] = useState(false);
+  const { data, isUploaded } = useUpload();
+  const router = useRouter();
   const calcMaxLengthNote = (noteStr: string) => {
     if (noteStr.length > 30) {
       return noteStr.slice(0, 30) + "...";
@@ -51,107 +62,156 @@ export default function Dashboard() {
 
   const sendEmails = async (e: FormEvent) => {
     e.preventDefault();
-    await fetch("/dashboard/api", {
-      method: "POST",
-    });
-    console.log("sent");
+
+    // const selectedRows = Array.from(
+    //   document.querySelectorAll("input[type=checkbox]:checked"),
+    // ).map((checkbox) => checkbox.parentElement?.parentElement);
+    //
+    const tempTarget: Target = {
+      email: "strandh.villiam@gmail.com",
+      namn: "Villiam Strandh",
+      distrikt: "Centrum 123",
+      aterlamnad: "2023-12-05",
+    };
+
+    try {
+      setIsSending(true);
+      const response = await fetch("/api/mail", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ targets: [tempTarget] }),
+      });
+      console.log(response);
+      setIsSending(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
     <form onSubmit={sendEmails} className="gap-4 flex flex-col">
-      <div className="flex justify-between items-center w-full">
-        <h1 className="text-2xl font-bold">Vilka vill du skicka mail till?</h1>
-        <div className="flex gap-4">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">Go back</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Are you sure?</DialogTitle>
-                <DialogDescription>
-                  You will need to upload the data again
-                </DialogDescription>
-                <DialogFooter className="gap-2">
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <GoBackButton />
-                </DialogFooter>
-              </DialogHeader>
-            </DialogContent>
-          </Dialog>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button type="submit" variant="default" className="px-8 self-end">
-                Send
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <Loading statusText="Sending emails..." />
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-      <div className="border-slate-800 w-full rounded-md border flex flex-col items-center justify-center gap-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Välj</TableHead>
-              <TableHead>Distrikttyp</TableHead>
-              <TableHead>Förkunnare</TableHead>
-              <TableHead>E-post</TableHead>
-              <TableHead>Tilldelad</TableHead>
-              <TableHead>Återlämnad</TableHead>
-              <TableHead>Obearbetat</TableHead>
-              <TableHead>Anteckning</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data
-              .filter((row) => !!row.Återlämnad)
-              .sort(
-                (a, b) =>
-                  new Date(b.Återlämnad).getTime() -
-                  new Date(a.Återlämnad).getTime(),
-              )
-              .map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <div className="flex">
-                      <Checkbox />
-                    </div>
-                  </TableCell>
-                  <TableCell>{`${row.Distriktstyp} ${row.Distriktsnummer}`}</TableCell>
-                  <TableCell>{calcMaxLengthName(row.Namn)}</TableCell>
-                  <TableCell>{row["E-post"]}</TableCell>
-                  <TableCell>{parseDateString(row.Tilldelade)}</TableCell>
-                  <TableCell>{parseDateString(row.Återlämnad)}</TableCell>
-                  <TableCell>{row.Obearbetade}</TableCell>
-                  <TableCell>
-                    <Dialog>
-                      <DialogTrigger>
-                        <div className="rounded-md hover:shadow hover:bg-slate-600 transition-colors ease-in-out p-2 duration-300 cursor-pointer">
-                          {calcMaxLengthNote(row.Anteckningar) || "..."}
-                        </div>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>
-                            {`Anteckning för ${row.Distriktstyp} ${row.Distriktsnummer}`}
-                          </DialogTitle>
-                          <DialogDescription>
-                            {row.Anteckningar}
-                          </DialogDescription>
-                        </DialogHeader>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
+      <Card>
+        <CardHeader className="flex flex-row justify-between">
+          <div className="flex flex-col gap-1">
+            <CardTitle className="">Återlämnade distrikt</CardTitle>
+            <CardDescription>
+              Välj de distrikt som du vill skicka mail till.
+            </CardDescription>
+          </div>
+          <div className="flex justify-between items-end">
+            <div className="flex gap-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Go back</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Are you sure?</DialogTitle>
+                    <DialogDescription>
+                      You will need to upload the data again
+                    </DialogDescription>
+                    <DialogFooter className="gap-2">
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <GoBackButton />
+                    </DialogFooter>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    type="submit"
+                    variant="default"
+                    className="px-8 self-end"
+                  >
+                    Send
+                  </Button>
+                </DialogTrigger>
+                {isSending && (
+                  <DialogContent>
+                    <Loading statusText="Sending emails..." />
+                  </DialogContent>
+                )}
+                {!isSending && (
+                  <DialogContent>
+                    <h2 className="font-bold text-lg">Mailen har skickats!</h2>
+                    <DialogClose asChild>
+                      <Button variant="default" className="px-8 self-end">
+                        Ok
+                      </Button>
+                    </DialogClose>
+                  </DialogContent>
+                )}
+              </Dialog>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="border-slate-800 w-full rounded-md border flex flex-col items-center justify-center gap-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Välj</TableHead>
+                  <TableHead>Distrikttyp</TableHead>
+                  <TableHead>Förkunnare</TableHead>
+                  <TableHead>E-post</TableHead>
+                  <TableHead>Tilldelad</TableHead>
+                  <TableHead>Återlämnad</TableHead>
+                  <TableHead>Obearbetat</TableHead>
+                  <TableHead>Anteckning</TableHead>
                 </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {data
+                  .filter((row) => !!row.Återlämnad)
+                  .sort(
+                    (a, b) =>
+                      new Date(b.Återlämnad).getTime() -
+                      new Date(a.Återlämnad).getTime(),
+                  )
+                  .map((row, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <div className="flex">
+                          <Checkbox />
+                        </div>
+                      </TableCell>
+                      <TableCell>{`${row.Distriktstyp} ${row.Distriktsnummer}`}</TableCell>
+                      <TableCell>{calcMaxLengthName(row.Namn)}</TableCell>
+                      <TableCell>{row["E-post"]}</TableCell>
+                      <TableCell>{parseDateString(row.Tilldelade)}</TableCell>
+                      <TableCell>{parseDateString(row.Återlämnad)}</TableCell>
+                      <TableCell>{row.Obearbetade}</TableCell>
+                      <TableCell>
+                        <Dialog>
+                          <DialogTrigger>
+                            <div className="rounded-md hover:shadow hover:bg-slate-600 transition-colors ease-in-out p-2 duration-300 cursor-pointer">
+                              {calcMaxLengthNote(row.Anteckningar) || "..."}
+                            </div>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>
+                                {`Anteckning för ${row.Distriktstyp} ${row.Distriktsnummer}`}
+                              </DialogTitle>
+                              <DialogDescription>
+                                {row.Anteckningar}
+                              </DialogDescription>
+                            </DialogHeader>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </form>
   );
 }

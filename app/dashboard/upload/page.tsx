@@ -8,36 +8,45 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { useUpload } from "@/context/upload-context";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, FormEvent } from "react";
+import { FormEvent, useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
-export default function Upload() {
-  const { upload, isUploaded } = useUpload();
+export default function UploadPage() {
+  const { upload, isUploaded, setIsUploaded, data } = useUpload();
+  const [fileName, setFileName] = useState<string | null>(null);
   const router = useRouter();
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const { files } = e.target;
+  const toast = useToast();
 
-    if (files) {
-      const file = files[0];
-      upload(file);
+  const handleFileChosen = async (data: File[]) => {
+    if (data.length < 0) {
+      return;
+    }
+    const file = data[0];
+    setFileName(file.name);
+    const isValid = await upload(file);
+    if (!isValid) {
+      setFileName(null);
+      toast.toast({
+        title: "Fel filformat",
+        description: "Ladda upp en .xlsx fil",
+        variant: "destructive",
+      });
     }
   };
 
   const handleNext = (e: FormEvent) => {
     e.preventDefault();
+    setIsUploaded(true);
     router.push("/dashboard/upload/table");
   };
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl font-bold">
-          Ladda upp excel filen:
-        </CardTitle>
+        <CardTitle>Ladda upp excel filen:</CardTitle>
         <CardDescription>
-          Ladda ner .xslx filen från TerritoryHelper
+          Ladda ner .xlsx filen från TerritoryHelper och ladda upp den här.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -46,7 +55,7 @@ export default function Upload() {
           className="flex w-full max-w-2xl flex-col gap-4"
         >
           {/* <Input onChange={handleFileChange} id="file" type={"file"} /> */}
-          <Dropzone onDrop={(acceptedFiles) => console.log(acceptedFiles)}>
+          <Dropzone onDrop={(acceptedFiles) => handleFileChosen(acceptedFiles)}>
             {({ getRootProps, getInputProps }) => (
               <Card
                 className="flex flex-col justify-center items-center border-dashed"
@@ -60,11 +69,11 @@ export default function Upload() {
                       width="24"
                       height="24"
                       viewBox="0 0 24 24"
-                      stroke-width="2"
+                      strokeWidth="2"
                       stroke="currentColor"
                       fill="none"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     >
                       <path stroke="none" d="M0 0h24v24H0z" />{" "}
                       <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />{" "}
@@ -79,13 +88,16 @@ export default function Upload() {
               </Card>
             )}
           </Dropzone>
+          <div>
+            <span>{fileName || "Ingen fil vald."}</span>
+          </div>
           <Button
             className={`${
-              !isUploaded
+              !data.length === 0
                 ? "opacity-40 hover:bg-primary cursor-default"
                 : "opacity-100"
             } w-full self-end`}
-            disabled={!isUploaded}
+            disabled={data.length === 0}
             type="submit"
           >
             Ladda upp

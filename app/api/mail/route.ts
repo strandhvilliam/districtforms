@@ -1,23 +1,49 @@
-import * as nodemailer from "nodemailer";
+import "dotenv/config";
+import { transporter } from "@/lib/smtp";
+import { InsertSentEmail, PostBody, Target } from "@/lib/types";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "strandh.villiam@gmail.com",
-    pass: "xsmtpsib-8727ff18eb0aacfca0af80af5c1882fe692bdae88d94d60cf25bc6329c98bfeb-J0hMp7nIGAPO8yaq",
-  },
-});
+export async function POST(request: Request) {
+  const body = await request.json();
+  const { targets } = body as PostBody;
 
-function generateEmailTemplate({ distrikt, namn }: Target) {
+  const insertTargets: InsertSentEmail[] = targets.map((target) => ({
+    email: target.email,
+    district: target.distrikt,
+    createdAt: new Date().toISOString(),
+    completed: false,
+  }));
+
+  const emails = targets.map((target) => {
+    const link = `https://uppsalars1.vercel.app/form/${target.distrikt}?namn=${target.namn}&aterlamnad=${target.aterlamnad}`;
+    const subject = `Tack för att du har bearbetat distrikt: ${target.distrikt}`;
+    return transporter.sendMail({
+      from: "Distriktgruppen Uppsala Södra, <uppsalars1@gmail.com>",
+      to: target.email,
+      subject,
+      html: generateEmailTemplate(target, link, subject),
+    });
+  });
+
+  const res = await Promise.all(emails);
+
+  return new Response(JSON.stringify(res), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function generateEmailTemplate(
+  { distrikt, namn }: Target,
+  link: string,
+  subject: string,
+) {
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thank You for Helping Us</title>
+  <title>${subject}</title>
 </head>
 <body style="font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px;">
 
@@ -28,7 +54,10 @@ function generateEmailTemplate({ distrikt, namn }: Target) {
 
     <p style="color: #666666;">Tryck på länken för att komma till ett formulär för att svara på frågor om distriktet.</p>
 
-    <a href="https://your-form-link.com" style="display: inline-block; padding: 10px 20px; background-color: ; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Visa formulär</a>
+    <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: ; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Visa formulär</a>
+
+    <p style="color: #666666;">Länken är giltig i 7 dagar.</p>
+    <p style="color: #666666;">Om du har några frågor eller funderingar, kontakta oss gärna!</p>
 
     <p style="color: #666666;">Med vänliga hälsningar,</p>
     <p style="color: #666666;">Distriktsgruppen, Uppsala Södra Församling av Jehovas Vittnen</p>
@@ -39,31 +68,4 @@ function generateEmailTemplate({ distrikt, namn }: Target) {
 </body>
 </html>
 `;
-}
-
-type Target = {
-  email: string;
-  distrikt: string;
-  namn: string;
-};
-
-type PostBody = {
-  targets: Target[];
-};
-
-export async function POST(request: Request) {
-  const { targets } = (await request.json()) as PostBody;
-
-  const emails = targets.map((target) => {
-    return transporter.sendMail({
-      from: "Distriktgruppen Uppsala Södra, <uppsalars1@gmail.com>",
-      to: target.email,
-      subject: `Tack för att du har bearbetat distrikt: ${target.distrikt}`,
-      html: generateEmailTemplate(target),
-    });
-  });
-
-  const res = await Promise.all(emails);
-
-  return Response.json(res);
 }
