@@ -20,6 +20,7 @@ export default function FormPage({ params }: { params: { slug: string } }) {
   const district = params.slug;
   const name = queryParams.get("name");
   const date = queryParams.get("date");
+  const id = queryParams.get("id");
 
   const form = useForm<FormAnswers>({
     resolver: zodResolver(formSchema),
@@ -36,6 +37,7 @@ export default function FormPage({ params }: { params: { slug: string } }) {
 
   const onSubmit = async (data: FormAnswers) => {
     const formData: DistrictData = {
+      sentEmailId: id ? +id : 0,
       district,
       name: name || "N/A",
       date: date || "N/A",

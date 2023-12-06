@@ -29,6 +29,7 @@ export type DistrictData = FormAnswers & {
   district: string;
   name: string;
   date: string;
+  sentEmailId: number;
 };
 
 export type SelectFormResponse = typeof formResponses.$inferSelect;

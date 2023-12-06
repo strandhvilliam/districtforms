@@ -1,6 +1,9 @@
 import "dotenv/config";
 import { transporter } from "@/lib/smtp";
 import { InsertSentEmail, PostBody, Target } from "@/lib/types";
+import { db } from "@/lib/db";
+import { sentEmails } from "@/lib/db/schema";
+import { ExecutedQuery } from "@planetscale/database";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -13,8 +16,16 @@ export async function POST(request: Request) {
     completed: false,
   }));
 
-  const emails = targets.map((target) => {
-    const link = `https://uppsalars1.vercel.app/form/${target.distrikt}?namn=${target.namn}&aterlamnad=${target.aterlamnad}`;
+  const promises = insertTargets.map((target) => {
+    return db.insert(sentEmails).values(target);
+  });
+
+  const queryResult: ExecutedQuery[] = await Promise.all(promises);
+
+  const ids = queryResult.map((res) => +res.insertId);
+
+  const emails = targets.map((target, index) => {
+    const link = `https://uppsalars1.vercel.app/form/${target.distrikt}?namn=${target.namn}&aterlamnad=${target.aterlamnad}&id=${ids[index]}`;
     const subject = `Tack för att du har bearbetat distrikt: ${target.distrikt}`;
     return transporter.sendMail({
       from: "Distriktgruppen Uppsala Södra, <uppsalars1@gmail.com>",
