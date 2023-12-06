@@ -21,7 +21,7 @@ export const useData = () => {
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const [sentEmailsData, setSentEmailsData] = useState<SelectSentEmail[]>([]);
-  const [answersData, setAnswersData] = useState<[]>([]);
+  const [answersData, setAnswersData] = useState<SelectFormResponse[]>([]);
   return (
     <DataContext.Provider
       value={{
