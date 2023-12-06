@@ -93,7 +93,7 @@ export default function UploadPage() {
           </div>
           <Button
             className={`${
-              !data.length === 0
+              data.length === 0
                 ? "opacity-40 hover:bg-primary cursor-default"
                 : "opacity-100"
             } w-full self-end`}
