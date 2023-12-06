@@ -61,7 +61,7 @@ export default function AnswersPage() {
       <CardHeader>
         <CardTitle>Senaste svarsresultat</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto">
         <form onSubmit={() => {}} className="gap-4 flex flex-col">
           <div className="border-slate-800 w-fit rounded-md border flex flex-col items-center justify-center gap-4">
             <Table>

@@ -25,7 +25,7 @@ export default function Login() {
     login(username, password);
   };
   return (
-    <main className="flex flex-col items-center gap-4 p-24">
+    <main className="flex flex-col min-h-screen items-center gap-4 justify-center sm:p-24">
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>Logga in</CardTitle>

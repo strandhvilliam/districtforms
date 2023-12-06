@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [isAuthenticated, isUploaded, pathname, router]);
 
   return (
-    <main className="flex flex-col items-center gap-4 p-24">
+    <main className="flex flex-col min-h-screen justify-center items-center gap-4 sm:p-24">
       <Tabs defaultValue="upload" className="w-full max-w-[124rem]">
         <TabsList>
           <TabsTrigger
