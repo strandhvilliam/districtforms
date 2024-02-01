@@ -31,6 +31,7 @@ async function getSentEmails(token: string): Promise<SelectSentEmail[]> {
       headers: {
         authorization: `${token}`,
       },
+      cache: "no-store",
     });
     const data = (await res.json()) as SelectSentEmail[];
     console.log(data);
@@ -48,6 +49,7 @@ async function getAnswers(token: string): Promise<SelectFormResponse[]> {
       headers: {
         authorization: `${token}`,
       },
+      cache: "no-store",
     });
     const data = (await res.json()) as SelectFormResponse[];
     console.log(data);

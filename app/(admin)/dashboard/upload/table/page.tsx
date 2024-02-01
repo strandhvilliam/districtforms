@@ -88,6 +88,7 @@ export default function TablePage() {
       await fetch("/api/mail", {
         method: "POST",
         body: JSON.stringify({ targets }),
+        cache: "no-store",
       });
       setIsSending(false);
     } catch (error) {
