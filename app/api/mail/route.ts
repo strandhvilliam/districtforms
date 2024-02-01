@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   const ids = queryResult.map((res) => +res.insertId);
 
   const emails = targets.map((target, index) => {
-    const link = `https://districtforms-ihnp7iv5b-strandhvilliam.vercel.app/form/${encodeURI(
+    const link = `https://districtforms.vercel.app/form/${encodeURI(
       target.distrikt,
     )}?namn=${encodeURI(target.namn)}&aterlamnad=${target.aterlamnad}&id=${
       ids[index]
