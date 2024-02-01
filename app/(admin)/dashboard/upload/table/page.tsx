@@ -1,16 +1,18 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
+import { GoBackButton } from "@/components/interaction/go-back";
+import Loading from "@/components/modals/loading";
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
@@ -19,35 +21,36 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Dialog } from "@/components/ui/dialog";
-import Loading from "@/components/modals/loading";
-import { GoBackButton } from "@/components/interaction/go-back";
-import { useUpload } from "@/context/upload-context";
-import { FormEvent, useEffect, useState } from "react";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useUpload } from "@/context/upload-context";
 import { Target } from "@/lib/types";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { Form, FormField, FormItem } from "@/components/ui/form";
-import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const FormSchema = z.object({
-  targets: z.array(z.string()).refine((value) => value.some((item) => item)),
+  // targets: z.array(z.string()).refine((value) => value.some((item) => item)),
+  targets: z.array(z.string()),
 });
 
 export default function TablePage() {
   const [isSending, setIsSending] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+      targets: [],
+    },
   });
-  const { data, isUploaded } = useUpload();
+  const { data } = useUpload();
   const calcMaxLengthNote = (noteStr: string) => {
     if (noteStr.length > 30) {
       return noteStr.slice(0, 30) + "...";
@@ -70,50 +73,48 @@ export default function TablePage() {
     return `${year}-${month}-${day}`;
   };
 
-  const sendEmails = async (e: FormEvent) => {
-    e.preventDefault();
-    const selectedRows = Array.from(
-      document.querySelectorAll("input[type=checkbox]:checked"),
-    ).map(
-      (checkbox) =>
-        checkbox.parentElement?.parentElement?.parentElement?.parentElement,
-    );
+  const onSubmit = async (input: z.infer<typeof FormSchema>) => {
+    setIsSending(true);
+    try {
+      const body = data.filter((row) => input.targets.includes(row.Id));
 
-    console.log("rows", selectedRows);
+      const targets: Target[] = body.map((row) => ({
+        email: row["E-post"],
+        aterlamnad: parseDateString(row.Återlämnad),
+        namn: row.Namn,
+        distrikt: `${row.Distriktstyp} ${row.Distriktsnummer}`,
+      }));
 
-    //
-    // const tempTarget: Target = {
-    //   email: "strandh.villiam@gmail.com",
-    //   namn: "Villiam Strandh",
-    //   distrikt: "Centrum 123",
-    //   aterlamnad: "2023-12-05",
-    // };
-    //
-    // try {
-    //   setIsSending(true);
-    //   const response = await fetch("/api/mail", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({ targets: [tempTarget] }),
-    //   });
-    //   console.log(response);
-    //   setIsSending(false);
-    // } catch (error) {
-    //   console.error(error);
-    // }
+      await fetch("/api/mail", {
+        method: "POST",
+        body: JSON.stringify({ targets }),
+      });
+      setIsSending(false);
+    } catch (error) {
+      setIsSending(false);
+    }
   };
+
+  const onErrors = (errors: any) => {
+    console.error(errors);
+  };
+
+  if (!data) {
+    return <Loading statusText="Loading data..." />;
+  }
 
   return (
     <Form {...form}>
-      <form onSubmit={sendEmails} className="gap-4 flex flex-col">
+      <form
+        onSubmit={form.handleSubmit(onSubmit, onErrors)}
+        className="gap-4 flex flex-col"
+      >
         <Card>
           <CardHeader className="flex flex-row justify-between">
             <div className="flex flex-col gap-1">
               <CardTitle className="">Återlämnade distrikt</CardTitle>
               <CardDescription>
-                Välj de distrikt som du vill skicka mail till.
+                Välj de inämningar som du vill skicka mail till.
               </CardDescription>
             </div>
             <div className="flex justify-between items-end">
@@ -191,51 +192,62 @@ export default function TablePage() {
                         new Date(b.Återlämnad).getTime() -
                         new Date(a.Återlämnad).getTime(),
                     )
-                    .map((row, index) => (
-                      <FormField
-                        key={index}
-                        name="targets"
-                        control={form.control}
-                        render={({ field }) => (
-                          <TableRow>
-                            <TableCell>
-                              <FormItem className="flex">
-                                <Checkbox />
+                    .map((row) => (
+                      <TableRow key={row.Id}>
+                        <TableCell>
+                          <FormField
+                            key={row.Id}
+                            name="targets"
+                            control={form.control}
+                            render={({ field }) => (
+                              <FormItem key={row.Id} className="flex">
+                                <FormControl>
+                                  <Checkbox
+                                    onCheckedChange={(checked) => {
+                                      console.log(row.Id);
+                                      return checked
+                                        ? field.onChange([
+                                            ...field.value,
+                                            row.Id,
+                                          ])
+                                        : field.onChange(
+                                            field.value.filter(
+                                              (value: any) => value !== row.Id,
+                                            ),
+                                          );
+                                    }}
+                                  />
+                                </FormControl>
                               </FormItem>
-                            </TableCell>
-                            <TableCell>{`${row.Distriktstyp} ${row.Distriktsnummer}`}</TableCell>
-                            <TableCell>{calcMaxLengthName(row.Namn)}</TableCell>
-                            <TableCell>{row["E-post"]}</TableCell>
-                            <TableCell>
-                              {parseDateString(row.Tilldelade)}
-                            </TableCell>
-                            <TableCell>
-                              {parseDateString(row.Återlämnad)}
-                            </TableCell>
-                            <TableCell>{row.Obearbetade}</TableCell>
-                            <TableCell>
-                              <Dialog>
-                                <DialogTrigger>
-                                  <div className="rounded-md hover:shadow hover:bg-slate-600 transition-colors ease-in-out p-2 duration-300 cursor-pointer">
-                                    {calcMaxLengthNote(row.Anteckningar) ||
-                                      "..."}
-                                  </div>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>
-                                      {`Anteckning för ${row.Distriktstyp} ${row.Distriktsnummer}`}
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                      {row.Anteckningar}
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                </DialogContent>
-                              </Dialog>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      />
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell>{`${row.Distriktstyp} ${row.Distriktsnummer}`}</TableCell>
+                        <TableCell>{calcMaxLengthName(row.Namn)}</TableCell>
+                        <TableCell>{row["E-post"]}</TableCell>
+                        <TableCell>{parseDateString(row.Tilldelade)}</TableCell>
+                        <TableCell>{parseDateString(row.Återlämnad)}</TableCell>
+                        <TableCell>{row.Obearbetade}</TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger>
+                              <div className="rounded-md hover:shadow hover:bg-slate-600 transition-colors ease-in-out p-2 duration-300 cursor-pointer">
+                                {calcMaxLengthNote(row.Anteckningar) || "..."}
+                              </div>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  {`Anteckning för ${row.Distriktstyp} ${row.Distriktsnummer}`}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  {row.Anteckningar}
+                                </DialogDescription>
+                              </DialogHeader>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
                     ))}
                 </TableBody>
               </Table>

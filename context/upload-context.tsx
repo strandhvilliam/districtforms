@@ -42,7 +42,12 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     const arrayBuffer = await file.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { cellDates: true });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet) as RowData[];
+    const unknownData = XLSX.utils.sheet_to_json(sheet);
+
+    const data = unknownData.map(
+      (row: any) => ({ ...row, Id: crypto.randomUUID() }) as RowData,
+    );
+
     setData(data);
     return true;
   };

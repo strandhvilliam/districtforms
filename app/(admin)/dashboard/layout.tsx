@@ -1,5 +1,4 @@
 "use client";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/auth-context";
 import { usePathname, useRouter } from "next/navigation";
@@ -10,14 +9,14 @@ import SentPage from "./sent/page";
 import { useUpload } from "@/context/upload-context";
 import TablePage from "./upload/table/page";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default function DashboardLayout() {
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const { isUploaded } = useUpload();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && pathname !== "/login") {
       console.log("redirecting");
       router.replace("/login");
       return;
@@ -25,7 +24,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [isAuthenticated, isUploaded, pathname, router]);
 
   return (
-    <main className="flex flex-col min-h-screen justify-center items-center gap-4 sm:p-24">
+    <main className="flex flex-col min-h-screen lg:mt-20 items-center gap-4 sm:p-24">
       <Tabs defaultValue="upload" className="w-full max-w-[124rem]">
         <TabsList>
           <TabsTrigger

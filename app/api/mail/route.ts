@@ -21,11 +21,14 @@ export async function POST(request: Request) {
   });
 
   const queryResult: ExecutedQuery[] = await Promise.all(promises);
-
   const ids = queryResult.map((res) => +res.insertId);
 
   const emails = targets.map((target, index) => {
-    const link = `https://uppsalars1.vercel.app/form/${target.distrikt}?namn=${target.namn}&aterlamnad=${target.aterlamnad}&id=${ids[index]}`;
+    const link = `https://districtforms-ihnp7iv5b-strandhvilliam.vercel.app/form/${encodeURI(
+      target.distrikt,
+    )}?namn=${encodeURI(target.namn)}&aterlamnad=${target.aterlamnad}&id=${
+      ids[index]
+    }`;
     const subject = `Tack för att du har bearbetat distrikt: ${target.distrikt}`;
     return transporter.sendMail({
       from: "Distriktgruppen Uppsala Södra, <uppsalars1@gmail.com>",

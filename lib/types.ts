@@ -2,6 +2,7 @@ import * as z from "zod";
 import { formResponses, sentEmails } from "./db/schema";
 
 export type RowData = {
+  Id: string;
   Anteckningar: string;
   Distriktsnummer: string;
   Distriktstitel: string;
