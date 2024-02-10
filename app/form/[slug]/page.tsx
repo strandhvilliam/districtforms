@@ -113,9 +113,9 @@ export default function FormPage({ params }: { params: { slug: string } }) {
             </div>
             <hr />
             <p>
-              Vi som ansvarar för distrikten är intresserad av att få dina
+              Vi som ansvarar för distrikten är intresserade av att få dina
               synpunkter på hur distriktet var utformat. Alla frågor är
-              frivilliga, men försök att svara på så många som möjligt
+              frivilliga, men försök att svara på så många som möjligt.
             </p>
             <hr />
             {QUESTIONS.map((q) => (
