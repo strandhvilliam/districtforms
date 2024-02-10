@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { sentEmails } from "@/lib/db/schema";
 import { ExecutedQuery } from "@planetscale/database";
 
+const BASE_URL = "https://districtforms.vercel.app/form";
+
 export async function POST(request: Request) {
   const body = await request.json();
   const { targets } = body as PostBody;
@@ -24,14 +26,14 @@ export async function POST(request: Request) {
   const ids = queryResult.map((res) => +res.insertId);
 
   const emails = targets.map((target, index) => {
-    const link = `https://districtforms.vercel.app/form/${encodeURI(
+    const link = `${BASE_URL}/${encodeURI(
       target.distrikt,
-    )}?namn=${encodeURI(target.namn)}&aterlamnad=${target.aterlamnad}&id=${
+    )}?name=${encodeURI(target.namn)}&date=${target.aterlamnad}&id=${
       ids[index]
     }`;
     const subject = `Tack för att du har bearbetat distrikt: ${target.distrikt}`;
     return transporter.sendMail({
-      from: "Distriktgruppen Uppsala Södra, <uppsalars1@gmail.com>",
+      from: "Distriktgruppen Uppsala Södra <no-reply@strandhvilliam.com>",
       to: target.email,
       subject,
       html: generateEmailTemplate(target, link, subject),
@@ -68,7 +70,7 @@ function generateEmailTemplate(
 
     <p style="color: #666666;">Tryck på länken för att komma till ett formulär för att svara på frågor om distriktet.</p>
 
-    <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: ; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Visa formulär</a>
+    <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: ; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;"><h3>Visa formulär</h3></a>
 
     <p style="color: #666666;">Länken är giltig i 7 dagar.</p>
     <p style="color: #666666;">Om du har några frågor eller funderingar, kontakta oss gärna!</p>
